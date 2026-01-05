@@ -487,7 +487,7 @@ else:
                 user_list.insert(0, current_user)
             
             seller_name = c2.selectbox("Seller", user_list)
-            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal", "Reference"])
+            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal","event/stall", "Reference","B2B"])
             
             c4, c5 = st.columns(2)
             cust_name = c4.text_input("Customer Name", placeholder="Enter full name")
@@ -640,3 +640,4 @@ else:
             st.dataframe(df, use_container_width=True, height=600)
         else:
             st.info("No sales data available.")
+
