@@ -15,11 +15,11 @@ st.set_page_config(
 
 # --- Security Configuration ---
 AUTHORIZED_USERS = {
-    "dhruv": "dhruv123",
-    "komal": "komal123",
-    "rupal": "rupal123",
-    "krunal": "krunal123",
-    "admin": "admin"
+    "dhruv": "dhruv@aethera",
+    "komal": "1806",
+    "rupal": "r29",
+    "krunal": "k1503",
+    "admin": "admin1"
 }
 
 # --- Google Sheets Connection ---
@@ -613,4 +613,5 @@ else:
                 df = df[mask]
             st.dataframe(df, use_container_width=True, height=600)
         else:
+
             st.info("No sales data available.")
