@@ -13,15 +13,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Security Configuration ---
-AUTHORIZED_USERS = {
-    "dhruv": "dhruv@aethera",
-    "komal": "1806",
-    "rupal": "r29",
-    "krunal": "k1503",
-    "admin": "admin1"
-}
-
 # --- Google Sheets Connection ---
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -32,7 +23,7 @@ SCOPE = [
 def get_gsheet_connection():
     """Establishes connection to Google Sheets using Streamlit Secrets."""
     try:
-        # Load credentials from Streamlit secrets
+        # Load credentials from Streamlit secrets (Only for API access, not app users)
         creds_dict = dict(st.secrets["gcp_service_account"])
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
         client = gspread.authorize(creds)
@@ -54,6 +45,35 @@ def get_or_create_worksheet(spreadsheet, title, headers):
         ws = spreadsheet.add_worksheet(title=title, rows=1000, cols=20)
         ws.append_row(headers)
         return ws
+
+# --- User Authentication (From Sheet) ---
+def fetch_users_from_sheet():
+    """Fetches valid users and passwords from the 'Users' tab in Google Sheets."""
+    sh = get_gsheet_connection()
+    
+    # Check for Users sheet
+    try:
+        ws = sh.worksheet("Users")
+    except gspread.WorksheetNotFound:
+        # Create if missing and add default admin
+        ws = sh.add_worksheet(title="Users", rows=100, cols=5)
+        ws.append_row(["Username", "Password"])
+        # ws.append_row(["admin", "admin123"]) # Default fallback
+    
+    records = ws.get_all_records()
+    
+    # Convert to dictionary {username: password}
+    user_db = {}
+    for row in records:
+        if row.get("Username") and row.get("Password"):
+            # Store usernames in lowercase for case-insensitive login
+            user_db[str(row["Username"]).strip().lower()] = str(row["Password"]).strip()
+            
+    if not user_db:
+        # Fallback if list is empty but sheet exists
+        return {"admin": "admin123"}
+        
+    return user_db
 
 # --- Data Loading (From Sheets) ---
 def load_data():
@@ -334,7 +354,10 @@ if st.session_state.logged_in_user is None:
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.form_submit_button("🚀 Launch Portal", type="primary", use_container_width=True):
-                if username in AUTHORIZED_USERS and AUTHORIZED_USERS[username] == password:
+                # Dynamically fetch users from Google Sheets
+                valid_users = fetch_users_from_sheet()
+                
+                if username in valid_users and valid_users[username] == password:
                     st.session_state.logged_in_user = username
                     st.success("Access Granted.")
                     st.rerun()
@@ -456,12 +479,15 @@ else:
             date_of_sale = c1.date_input("Date", datetime.now())
             
             current_user = st.session_state.logged_in_user
-            seller_options = ["group", "dhruv", "komal", "rupal", "krunal"]
-            if current_user in seller_options:
-                seller_options.remove(current_user)
-                seller_options.insert(0, current_user)
-            seller_name = c2.selectbox("Seller", seller_options)
-            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal", "events/stall", "Reference","B2B"])
+            # Fetch actual users from sheet for dropdown
+            users_dict = fetch_users_from_sheet()
+            user_list = list(users_dict.keys())
+            if current_user in user_list:
+                user_list.remove(current_user)
+                user_list.insert(0, current_user)
+            
+            seller_name = c2.selectbox("Seller", user_list)
+            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal", "Reference"])
             
             c4, c5 = st.columns(2)
             cust_name = c4.text_input("Customer Name", placeholder="Enter full name")
@@ -613,5 +639,4 @@ else:
                 df = df[mask]
             st.dataframe(df, use_container_width=True, height=600)
         else:
-
             st.info("No sales data available.")
