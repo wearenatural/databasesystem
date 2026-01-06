@@ -513,7 +513,7 @@ else:
                 user_list.insert(0, current_user)
             
             seller_name = c2.selectbox("Seller", user_list)
-            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal", "Reference"])
+            sales_channel = c3.selectbox("Channel", ["WhatsApp", "Instagram", "Personal", "Event/stall", "Reference", "B2B"])
             
             # Mobile Friendly: Columns collapse on mobile, so input order matters
             c4, c5 = st.columns(2)
@@ -558,7 +558,7 @@ else:
             with st.container():
                 st.subheader("🚚 Payment & Delivery")
                 lc1, lc2, lc3, lc4 = st.columns(4)
-                pay_method = lc1.selectbox("Method", ["UPI", "Cash"])
+                pay_method = lc1.selectbox("Method", ["UPI", "Cash", "Pending"])
                 pay_status = lc2.selectbox("Status", ["Paid", "Pending", "Credit"])
                 del_mode = lc3.selectbox("Delivery", ["Hand Delivery", "Courier"])
                 ship_cost = lc4.number_input("Shipping Cost", value=0.0)
@@ -683,4 +683,5 @@ else:
                 df = df[mask]
             st.dataframe(df, use_container_width=True, height=600) # Changed to use_container_width
         else:
+
             st.info("No sales data available.")
